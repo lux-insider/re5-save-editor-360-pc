@@ -8,17 +8,16 @@ component Retrato inherits Rectangle {
     in property <string> nome;
     in property <bool> escolhido;
     callback clicado();
-    height: 112px;
+    height: 130px;
     border-radius: Tema.raio-campo;
     clip: true;
     border-width: root.escolhido ? 3px : 1px;
     border-color: root.escolhido ? Tema.vermelho : Tema.borda;
-    // A foto é mais alta que o cartão: sobe um pouco para mostrar o rosto.
+    // As fotos já vêm recortadas numa faixa centrada no rosto.
     Image {
         source: root.foto;
         width: parent.width;
-        height: parent.width * 400 / 340;
-        y: -parent.width * 0.16;
+        height: parent.height;
         image-fit: cover;
         opacity: root.escolhido || toque.has-hover ? 1 : 0.55;
     }
