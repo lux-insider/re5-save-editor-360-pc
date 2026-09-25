@@ -1,0 +1,49 @@
+// Tela inicial: escolher (ou arrastar) o save.
+import { Tema } from "../tema.slint";
+import { Ponte } from "../ponte.slint";
+import { Botao } from "../componentes/basicos.slint";
+
+export component TelaInicio inherits Rectangle {
+    cartao := Rectangle {
+        width: min(460px, root.width - 32px);
+        height: conteudo.preferred-height + 40px;
+        border-radius: Tema.raio;
+        background: Tema.cartao;
+        border-width: Ponte.arrastando ? 3px : 0;
+        border-color: Tema.vermelho;
+
+        conteudo := VerticalLayout {
+            padding: 20px;
+            spacing: 14px;
+            Text {
+                text: "Carregar save";
+                font-size: 34px;
+                horizontal-alignment: center;
+                color: Tema.texto;
+            }
+            Rectangle { height: 1px; background: Tema.linha; }
+            Botao {
+                texto: "ESCOLHER ARQUIVO";
+                clicado => { Ponte.abrir(); }
+            }
+            Text {
+                text: "ou arraste o save para esta janela";
+                horizontal-alignment: center;
+                color: Tema.texto-2;
+            }
+            Text {
+                text: "Xbox 360 (pacote CON savedata.bin) ou PC / Steam (savedata.bin)";
+                horizontal-alignment: center;
+                font-size: Tema.fonte-pequena;
+                color: Tema.texto-2;
+                wrap: word-wrap;
+            }
+            Text {
+                text: "Visual inspirado no RE5 Save Editor de shinneider";
+                horizontal-alignment: center;
+                font-size: 11px;
+                color: Tema.texto-2;
+            }
+        }
+    }
+}

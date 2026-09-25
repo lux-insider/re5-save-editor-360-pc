@@ -1,0 +1,118 @@
+// Janela principal: menus, wallpaper, tela inicial ou editor com abas.
+import { Palette } from "std-widgets.slint";
+import { Tema } from "tema.slint";
+import { Ponte } from "ponte.slint";
+import { Botao, BarraAbas } from "componentes/basicos.slint";
+import { Aviso, Confirmacao, Sobre } from "componentes/dialogos.slint";
+import { TelaInicio } from "telas/inicio.slint";
+import { TelaInformacoes } from "telas/informacoes.slint";
+import { TelaDesbloqueios } from "telas/desbloqueios.slint";
+import { TelaPersonagens } from "telas/personagens.slint";
+import { TelaInventario } from "telas/inventario.slint";
+
+export { Ponte }
+
+export component JanelaPrincipal inherits Window {
+    title: "RE5 Save Editor 360+PC";
+    icon: @image-url("imagens/icone.png");
+    preferred-width: 1200px;
+    preferred-height: 840px;
+    min-width: 900px;
+    min-height: 620px;
+    background: #f5f5f5;
+    default-font-size: Tema.fonte;
+
+    // Tema claro sempre: o cartão é claro, mesmo com o sistema no modo escuro.
+    init => { Palette.color-scheme = ColorScheme.light; }
+
+    MenuBar {
+        Menu {
+            title: "Arquivo";
+            MenuItem { title: "Abrir save…"; activated => { Ponte.abrir(); } }
+            MenuItem { title: "Recarregar"; enabled: Ponte.aberto; activated => { Ponte.recarregar(); } }
+            MenuSeparator { }
+            MenuItem { title: "Salvar"; enabled: Ponte.pode-salvar; activated => { Ponte.salvar(); } }
+            MenuItem { title: "Salvar como…"; enabled: Ponte.aberto && Ponte.valido; activated => { Ponte.salvar-como(); } }
+            MenuItem { title: "Desfazer alterações"; enabled: Ponte.sujo; activated => { Ponte.desfazer(); } }
+            MenuSeparator { }
+            MenuItem { title: "Sair"; activated => { Ponte.sair(); } }
+        }
+        Menu {
+            title: "Ajuda";
+            MenuItem { title: "Sobre"; activated => { Ponte.sobre-visivel = true; } }
+        }
+    }
+
+    Image {
+        source: @image-url("imagens/re5-wallpaper.jpg");
+        width: parent.width;
+        height: parent.height;
+        image-fit: cover;
+    }
+
+    if !Ponte.aberto: TelaInicio {
+        width: parent.width;
+        height: parent.height;
+    }
+
+    if Ponte.aberto: Rectangle {
+        x: 24px;
+        y: 14px;
+        width: parent.width - 48px;
+        height: parent.height - 28px;
+        border-radius: Tema.raio;
+        background: Tema.cartao;
+
+        VerticalLayout {
+            padding: 18px;
+            padding-top: 10px;
+            spacing: 6px;
+
+            Text { text: "Save Editor"; font-size: 30px; horizontal-alignment: center; }
+            Text {
+                text: Ponte.plataforma;
+                font-size: 13px;
+                color: Tema.texto-2;
+                horizontal-alignment: center;
+            }
+
+            BarraAbas {
+                abas: Ponte.xbox ? ["SAVE", "DESBLOQUEIOS", "PERSONAGENS", "INVENTÁRIO"] : ["SAVE", "DESBLOQUEIOS"];
+                atual <=> Ponte.aba;
+            }
+
+            Rectangle {
+                vertical-stretch: 1;
+                if Ponte.aba == 0: TelaInformacoes { width: parent.width; height: parent.height; }
+                if Ponte.aba == 1: TelaDesbloqueios { width: parent.width; height: parent.height; }
+                if Ponte.aba == 2 && Ponte.xbox: TelaPersonagens { width: parent.width; height: parent.height; }
+                if Ponte.aba == 3 && Ponte.xbox: TelaInventario { width: parent.width; height: parent.height; }
+            }
+
+            Text {
+                text: Ponte.nota;
+                font-size: 12px;
+                color: Tema.texto-2;
+                wrap: word-wrap;
+            }
+            Rectangle { height: 1px; background: Tema.linha; }
+            HorizontalLayout {
+                spacing: 14px;
+                padding-top: 6px;
+                Botao { texto: "ABRIR OUTRO"; clicado => { Ponte.abrir(); } }
+                Rectangle { horizontal-stretch: 1; }
+                Botao { texto: "DESFAZER"; ativo: Ponte.sujo; clicado => { Ponte.desfazer(); } }
+                Botao { texto: "SALVAR COMO…"; ativo: Ponte.valido; clicado => { Ponte.salvar-como(); } }
+                Botao { texto: "SALVAR ARQUIVO"; cheio: true; ativo: Ponte.pode-salvar; clicado => { Ponte.salvar(); } }
+            }
+        }
+    }
+
+    Aviso {
+        x: 24px;
+        y: parent.height - self.height - 86px;
+    }
+
+    Confirmacao { width: parent.width; height: parent.height; }
+    Sobre { width: parent.width; height: parent.height; }
+}

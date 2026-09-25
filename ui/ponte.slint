@@ -1,0 +1,120 @@
+// Ponte entre a interface e o Rust.
+//
+// A interface só lê estas propriedades e chama estes callbacks; quem
+// preenche os dados e responde aos callbacks é o controlador em Rust
+// (src/interface). Nenhuma tela fala com o save diretamente.
+
+export struct Opcao {
+    nome: string,
+    marcado: bool,
+}
+
+export struct Lista {
+    titulo: string,
+    contagem: string,
+    opcoes: [Opcao],
+}
+
+export struct SlotVisivel {
+    numero: int,
+    nome: string,
+    classe: string,
+    qtd: string,
+    vazio: bool,
+    mudou: bool,
+}
+
+export global Ponte {
+    // ---- save aberto
+    in property <bool> aberto: false;
+    in property <bool> xbox: true;
+    in property <string> plataforma;
+    in property <string> caminho;
+
+    in-out property <int> aba: 0;
+
+    // ---- campos editáveis (a tela escreve, o Rust confere)
+    in-out property <string> gold;
+    in-out property <string> points;
+    in-out property <string> profile-id;
+    in-out property <string> device-id;
+    in-out property <string> steam-id;
+    in-out property <string> data;
+    in property <bool> gold-invalido;
+    in property <bool> points-invalido;
+    in property <bool> profile-invalido;
+    in property <bool> device-invalido;
+    in property <bool> steam-invalido;
+    in property <bool> data-invalida;
+
+    // ---- informações só de leitura
+    in property <string> checksum-salvo;
+    in property <string> checksum-real;
+    in property <bool> checksum-ok;
+    in property <string> assinatura;
+    in property <bool> assinatura-ok;
+    in property <string> nota;
+
+    // ---- desbloqueios
+    in property <[Lista]> listas;
+    in-out property <int> lista-atual: 0;
+
+    // ---- personagens e inventário (Xbox)
+    in-out property <int> personagem: 0;
+    in property <[SlotVisivel]> chris;
+    in property <[SlotVisivel]> sheva;
+    in property <[[StandardListViewItem]]> inventario;
+    in property <[string]> filtros;
+    in-out property <int> filtro: 0;
+    in property <string> resumo-inventario;
+
+    // ---- editor de slot
+    in property <bool> editor-ativo: false;
+    in property <string> editor-titulo;
+    in property <string> editor-onde;
+    in property <int> editor-indice: -1;
+    in property <[string]> classes;
+    in-out property <int> editor-classe: 0;
+    in property <[string]> editor-itens;
+    in-out property <int> editor-item: 0;
+    in-out property <string> editor-qtd;
+    in property <string> editor-max;
+    in property <bool> editor-qtd-invalida;
+
+    // ---- salvar
+    in property <bool> sujo: false;
+    in property <bool> pode-salvar: false;
+    in property <bool> valido: true;
+
+    // ---- avisos e diálogos
+    in property <string> aviso;
+    in property <int> aviso-tipo: 0; // 0 informação, 1 sucesso, 2 erro
+    in property <bool> aviso-visivel: false;
+    in property <bool> confirma-visivel: false;
+    in property <string> confirma-titulo;
+    in property <string> confirma-texto;
+    in property <string> confirma-sim;
+    in-out property <bool> sobre-visivel: false;
+    in property <bool> arrastando: false;
+
+    // ---- ações
+    callback abrir();
+    callback recarregar();
+    callback salvar();
+    callback salvar-como();
+    callback desfazer();
+    callback sair();
+    callback campo-editado();
+    callback copiar-ids();
+    callback voltar-ids();
+    callback marcar(int /* lista */, int /* opção */, bool);
+    callback marcar-todos(int /* lista */, bool);
+    callback selecionar-slot(string /* chris | sheva */, int);
+    callback selecionar-linha(int /* linha da tabela */);
+    callback trocar-filtro(int);
+    callback editor-classe-mudou(int);
+    callback aplicar-slot();
+    callback esvaziar-slot();
+    callback confirma-resposta(bool);
+    callback fechar-aviso();
+}

@@ -1,0 +1,111 @@
+// Aba "Save": arquivo, IDs, data, checksum, assinatura e dinheiro.
+import { Tema } from "../tema.slint";
+import { Ponte } from "../ponte.slint";
+import { Botao, Campo, Divisor, Selo } from "../componentes/basicos.slint";
+
+export component TelaInformacoes inherits VerticalLayout {
+    spacing: 16px;
+    padding-top: 12px;
+
+    Campo {
+        rotulo: "Arquivo";
+        texto: Ponte.caminho;
+        leitura: true;
+    }
+
+    if Ponte.xbox: HorizontalLayout {
+        spacing: 24px;
+        Campo {
+            horizontal-stretch: 1;
+            rotulo: "Perfil (XUID) · 16 dígitos";
+            texto <=> Ponte.profile-id;
+            invalido: Ponte.profile-invalido;
+            editado => { Ponte.campo-editado(); }
+        }
+        Campo {
+            horizontal-stretch: 2;
+            rotulo: "Device ID · 40 dígitos";
+            texto <=> Ponte.device-id;
+            invalido: Ponte.device-invalido;
+            editado => { Ponte.campo-editado(); }
+        }
+    }
+    if Ponte.xbox: HorizontalLayout {
+        spacing: 12px;
+        alignment: start;
+        Botao { pequeno: true; texto: "COPIAR DE OUTRO SAVE…"; clicado => { Ponte.copiar-ids(); } }
+        Botao { pequeno: true; texto: "VOLTAR IDS"; clicado => { Ponte.voltar-ids(); } }
+        Text {
+            text: "Para jogar com outro perfil ou console: escolha um save daquele perfil/pendrive.";
+            font-size: Tema.fonte-pequena;
+            color: Tema.texto-2;
+            vertical-alignment: center;
+        }
+    }
+    if !Ponte.xbox: HorizontalLayout {
+        Campo {
+            width: 320px;
+            rotulo: "Steam ID";
+            texto <=> Ponte.steam-id;
+            invalido: Ponte.steam-invalido;
+            editado => { Ponte.campo-editado(); }
+        }
+    }
+
+    HorizontalLayout {
+        spacing: 24px;
+        Campo {
+            horizontal-stretch: 2;
+            rotulo: "Data do save (dd/mm/aaaa hh:mm:ss)";
+            texto <=> Ponte.data;
+            invalido: Ponte.data-invalida;
+            editado => { Ponte.campo-editado(); }
+        }
+        Campo {
+            horizontal-stretch: 1;
+            rotulo: "Checksum salvo";
+            texto: Ponte.checksum-salvo;
+            leitura: true;
+            ajuda: Ponte.checksum-ok ? "confere" : "não confere";
+            ajuda-ok: Ponte.checksum-ok;
+            invalido: !Ponte.checksum-ok;
+        }
+        Campo {
+            horizontal-stretch: 1;
+            rotulo: "Checksum real";
+            texto: Ponte.checksum-real;
+            leitura: true;
+        }
+    }
+
+    if Ponte.xbox: HorizontalLayout {
+        spacing: 12px;
+        alignment: start;
+        Text { text: "Assinatura:"; color: Tema.texto-2; vertical-alignment: center; }
+        Selo { texto: Ponte.assinatura; bom: Ponte.assinatura-ok; }
+    }
+
+    Divisor { titulo: "Dinheiro"; }
+    HorizontalLayout {
+        spacing: 24px;
+        alignment: start;
+        Campo {
+            width: 260px;
+            rotulo: Ponte.xbox ? "Gold" : "Money";
+            texto <=> Ponte.gold;
+            invalido: Ponte.gold-invalido;
+            ajuda: "máximo 9.999.999 no jogo";
+            editado => { Ponte.campo-editado(); }
+        }
+        Campo {
+            width: 260px;
+            rotulo: "Exchange Points";
+            texto <=> Ponte.points;
+            invalido: Ponte.points-invalido;
+            ajuda: "máximo 9.999.999 no jogo";
+            editado => { Ponte.campo-editado(); }
+        }
+    }
+
+    Rectangle { vertical-stretch: 1; }
+}

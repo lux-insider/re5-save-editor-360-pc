@@ -1,8 +1,8 @@
 # RE5 Save Editor 360+PC
 
 Editor de save do **Resident Evil 5** para **Xbox 360** e **PC (Steam)** num
-programa só, em português. Executável pequeno em Rust, para Linux e Windows
-(~1,2 MB cada).
+programa só, em português. Feito em Rust com interface em [Slint](https://slint.dev),
+para Linux e Windows, sem HTML e sem depender de navegador ou WebView.
 
 É o irmão do [re5-save-editor-360](https://github.com/lux-insider/re5-save-editor-360),
 só que também abre saves de PC e edita os desbloqueios.
@@ -18,11 +18,13 @@ só que também abre saves de PC e edita os desbloqueios.
   (as 19 armas) e 0x80 tem 12 (os 12 arquivos). Só os bits de cada lista são
   alterados; bits desconhecidos ficam como estavam.
 - **Data do save** editável, nas duas plataformas.
-- **Executável menor**: ~1,2 MB no Linux e no Windows, contra 3,7 MB / 3,4 MB do
-  editor em Tauri. Usa o WebView do próprio sistema (WebKitGTK / WebView2).
+- **Interface nativa em Slint**: abas (Save, Desbloqueios, Personagens,
+  Inventário), menus, tabela do inventário, seleção do Chris ou da Sheva pelo
+  retrato e painel de edição do slot. Não usa HTML, CSS, JavaScript nem WebView:
+  no Windows não precisa do WebView2.
 - **Arrastar e soltar** o save na janela, e **Salvar como…**.
-- **Tela nova**, no estilo do editor de PC do shinneider: wallpaper, cartão
-  translúcido, campos e botões no estilo Material.
+- No estilo do editor de PC do shinneider: wallpaper, cartão translúcido,
+  campos e botões no estilo Material.
 
 Continua tudo do editor do Xbox: Gold e Exchange Points, os 9 slots do Chris e
 da Sheva, os 84 espaços do inventário (com os tesouros pelo nome), perfil
@@ -46,8 +48,8 @@ do console e backup antes de cada gravação.
 Baixe na página de **Releases** e descompacte:
 
 ```
-RE5-Save-Editor-360-PC           Linux
-RE5 Save Editor 360+PC.exe       Windows 10/11 (usa o WebView2 do sistema)
+RE5-Save-Editor-360-PC           Linux (~12 MB)
+RE5 Save Editor 360+PC.exe       Windows 10/11 (~10 MB)
 console/kv.bin                   keyvault do seu console (opcional, para assinar)
 backups/                         cópia do save antes de cada gravação
 ```
@@ -69,8 +71,23 @@ cargo xwin build --release --target x86_64-pc-windows-msvc       # Windows
 cargo test --release
 ```
 
-No Linux precisa de `libwebkit2gtk-4.1-dev` e `libgtk-3-dev`.
+No Linux precisa de `libgtk-3-dev` (diálogos de arquivo) e `libfontconfig-dev`.
 `examples/verifica.rs` lê e edita saves pela linha de comando, para testes.
+
+## Estrutura
+
+```
+src/save.rs          backend: lê e grava o save (Xbox 360 e PC)
+src/itens.rs         tabela de itens
+src/sistema/         pastas, keyvault e diálogos de arquivo
+src/interface/       controlador: o único ponto entre a interface e o backend
+ui/ponte.slint       tudo que a interface lê e os callbacks que ela chama
+ui/app.slint         janela, menus e abas
+ui/telas/            início, save, desbloqueios, personagens, inventário
+ui/componentes/      botões, campos, slots, diálogos
+```
+
+Detalhes da migração e o checklist das funções em [docs/MIGRACAO-SLINT.md](docs/MIGRACAO-SLINT.md).
 
 ## Como foi conferido
 
@@ -95,3 +112,8 @@ por sua conta e risco.
 ## Licença
 
 MIT — veja [LICENSE](LICENSE).
+
+A interface usa o [Slint](https://slint.dev) sob a Slint Royalty-free License
+(o "Sobre" do programa mostra o selo *Made with Slint*, como a licença pede).
+
+[![Made with Slint](https://raw.githubusercontent.com/slint-ui/slint/master/logo/MadeWithSlint-logo-light.svg)](https://slint.dev)

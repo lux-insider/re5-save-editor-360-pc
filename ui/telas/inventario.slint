@@ -1,0 +1,50 @@
+// Aba "Inventário": tabela dos 84 espaços, com filtro e editor ao lado.
+import { ComboBox, StandardTableView } from "std-widgets.slint";
+import { Tema } from "../tema.slint";
+import { Ponte } from "../ponte.slint";
+import { EditorSlot } from "../componentes/slots.slint";
+
+export component TelaInventario inherits HorizontalLayout {
+    spacing: 20px;
+    padding-top: 12px;
+
+    VerticalLayout {
+        horizontal-stretch: 1;
+        spacing: 12px;
+        HorizontalLayout {
+            spacing: 12px;
+            Text {
+                text: Ponte.resumo-inventario;
+                color: Tema.texto-2;
+                vertical-alignment: center;
+                horizontal-stretch: 1;
+            }
+            Text { text: "Mostrar"; color: Tema.texto-2; vertical-alignment: center; }
+            ComboBox {
+                width: 220px;
+                model: Ponte.filtros;
+                current-index <=> Ponte.filtro;
+                selected => { Ponte.trocar-filtro(self.current-index); }
+            }
+        }
+        Rectangle {
+            vertical-stretch: 1;
+            border-radius: Tema.raio-campo;
+            background: Tema.painel;
+            tabela := StandardTableView {
+                width: parent.width;
+                height: parent.height;
+                columns: [
+                    { title: "Espaço", width: 90px },
+                    { title: "Item", horizontal-stretch: 1 },
+                    { title: "Classe", width: 170px },
+                    { title: "Quantidade", width: 130px },
+                ];
+                rows: Ponte.inventario;
+                current-row-changed(linha) => { Ponte.selecionar-linha(linha); }
+            }
+        }
+    }
+
+    EditorSlot { }
+}

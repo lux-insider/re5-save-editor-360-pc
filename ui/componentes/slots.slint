@@ -1,0 +1,119 @@
+// Cartão de um slot e o painel que edita o slot escolhido.
+import { ComboBox, LineEdit } from "std-widgets.slint";
+import { Tema } from "../tema.slint";
+import { Ponte, SlotVisivel } from "../ponte.slint";
+import { Botao } from "basicos.slint";
+
+export component CartaoSlot inherits Rectangle {
+    in property <SlotVisivel> slot;
+    in property <bool> escolhido;
+    callback clicado();
+
+    height: 64px;
+    border-radius: Tema.raio-campo;
+    background: root.escolhido ? Tema.selecao : (toque.has-hover ? #ffffff : Tema.painel);
+    border-width: root.escolhido || root.slot.mudou ? 2px : 1px;
+    border-color: root.escolhido ? Tema.azul : (root.slot.mudou ? Tema.laranja : Tema.borda);
+
+    VerticalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        spacing: 2px;
+        HorizontalLayout {
+            Text {
+                text: "Slot " + root.slot.numero + (root.slot.mudou ? "  •  alterado" : "");
+                font-size: 11px;
+                color: root.slot.mudou ? Tema.laranja : Tema.texto-2;
+                horizontal-stretch: 1;
+            }
+            Text { text: root.slot.classe; font-size: 11px; color: Tema.texto-2; }
+        }
+        HorizontalLayout {
+            spacing: 8px;
+            Text {
+                text: root.slot.nome;
+                font-size: 15px;
+                color: root.slot.vazio ? Tema.desativado : Tema.texto;
+                overflow: elide;
+                horizontal-stretch: 1;
+                vertical-alignment: center;
+            }
+            Text {
+                text: root.slot.qtd;
+                font-size: 13px;
+                color: Tema.texto-2;
+                vertical-alignment: center;
+            }
+        }
+    }
+    toque := TouchArea { mouse-cursor: pointer; clicked => { root.clicado(); } }
+}
+
+// Painel de edição, compartilhado pelas abas Personagens e Inventário.
+export component EditorSlot inherits Rectangle {
+    width: 300px;
+    border-radius: Tema.raio-campo;
+    border-width: 1px;
+    border-color: Tema.linha;
+    background: Tema.painel;
+
+    VerticalLayout {
+        padding: 16px;
+        spacing: 12px;
+        alignment: start;
+
+        Text { text: "Editar slot"; font-size: 13px; font-weight: 600; color: Tema.texto-2; letter-spacing: 1px; }
+
+        if !Ponte.editor-ativo: Text {
+            text: "Escolha um slot para trocar o item ou a quantidade.";
+            wrap: word-wrap;
+            color: Tema.texto-2;
+        }
+
+        if Ponte.editor-ativo: VerticalLayout {
+            spacing: 12px;
+            Text { text: Ponte.editor-titulo; font-size: 17px; font-weight: 600; color: Tema.vermelho; }
+            VerticalLayout {
+                spacing: 3px;
+                Text { text: "Classe"; font-size: Tema.fonte-pequena; color: Tema.texto-2; }
+                ComboBox {
+                    model: Ponte.classes;
+                    current-index <=> Ponte.editor-classe;
+                    selected => { Ponte.editor-classe-mudou(self.current-index); }
+                }
+            }
+            VerticalLayout {
+                spacing: 3px;
+                Text { text: "Item"; font-size: Tema.fonte-pequena; color: Tema.texto-2; }
+                ComboBox {
+                    model: Ponte.editor-itens;
+                    current-index <=> Ponte.editor-item;
+                }
+            }
+            VerticalLayout {
+                spacing: 3px;
+                Text {
+                    text: "Quantidade";
+                    font-size: Tema.fonte-pequena;
+                    color: Ponte.editor-qtd-invalida ? Tema.vermelho : Tema.texto-2;
+                }
+                LineEdit {
+                    text <=> Ponte.editor-qtd;
+                    input-type: number;
+                }
+                Text {
+                    text: "Máximo " + Ponte.editor-max;
+                    font-size: 11px;
+                    color: Ponte.editor-qtd-invalida ? Tema.vermelho : Tema.texto-2;
+                }
+            }
+            HorizontalLayout {
+                spacing: 10px;
+                Botao { texto: "APLICAR"; cheio: true; clicado => { Ponte.aplicar-slot(); } }
+                Botao { texto: "ESVAZIAR"; clicado => { Ponte.esvaziar-slot(); } }
+            }
+        }
+    }
+}

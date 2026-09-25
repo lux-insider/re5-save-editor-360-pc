@@ -1,0 +1,85 @@
+// Aba "Personagens": escolher Chris ou Sheva e editar os 9 slots.
+import { Tema } from "../tema.slint";
+import { Ponte, SlotVisivel } from "../ponte.slint";
+import { CartaoSlot, EditorSlot } from "../componentes/slots.slint";
+
+component Retrato inherits Rectangle {
+    in property <image> foto;
+    in property <string> nome;
+    in property <bool> escolhido;
+    callback clicado();
+    height: 112px;
+    border-radius: Tema.raio-campo;
+    clip: true;
+    border-width: root.escolhido ? 3px : 1px;
+    border-color: root.escolhido ? Tema.vermelho : Tema.borda;
+    // A foto é mais alta que o cartão: sobe um pouco para mostrar o rosto.
+    Image {
+        source: root.foto;
+        width: parent.width;
+        height: parent.width * 400 / 340;
+        y: -parent.width * 0.16;
+        image-fit: cover;
+        opacity: root.escolhido || toque.has-hover ? 1 : 0.55;
+    }
+    Rectangle {
+        y: parent.height - 34px;
+        height: 34px;
+        background: @linear-gradient(0deg, #000000c0 0%, #00000000 100%);
+    }
+    Text {
+        x: 12px;
+        y: parent.height - 30px;
+        text: root.nome;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        color: white;
+    }
+    toque := TouchArea { mouse-cursor: pointer; clicked => { root.clicado(); } }
+}
+
+export component TelaPersonagens inherits HorizontalLayout {
+    spacing: 20px;
+    padding-top: 12px;
+
+    VerticalLayout {
+        horizontal-stretch: 1;
+        spacing: 16px;
+
+        HorizontalLayout {
+            spacing: 16px;
+            Retrato {
+                foto: @image-url("../imagens/chris.jpg");
+                nome: "CHRIS";
+                escolhido: Ponte.personagem == 0;
+                clicado => { Ponte.personagem = 0; }
+            }
+            Retrato {
+                foto: @image-url("../imagens/sheva.jpg");
+                nome: "SHEVA";
+                escolhido: Ponte.personagem == 1;
+                clicado => { Ponte.personagem = 1; }
+            }
+        }
+
+        grade := Rectangle {
+            property <[SlotVisivel]> slots: Ponte.personagem == 0 ? Ponte.chris : Ponte.sheva;
+            property <string> onde: Ponte.personagem == 0 ? "chris" : "sheva";
+            property <length> vao: 12px;
+            property <length> larg: (self.width - 2 * vao) / 3;
+            min-height: 3 * 64px + 2 * vao;
+            for s[i] in slots: CartaoSlot {
+                x: mod(i, 3) * (grade.larg + grade.vao);
+                y: floor(i / 3) * (64px + grade.vao);
+                width: grade.larg;
+                slot: s;
+                escolhido: Ponte.editor-ativo && Ponte.editor-onde == grade.onde && Ponte.editor-indice == i;
+                clicado => { Ponte.selecionar-slot(grade.onde, i); }
+            }
+        }
+        Rectangle { vertical-stretch: 1; }
+    }
+
+    EditorSlot { }
+}
