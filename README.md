@@ -72,6 +72,17 @@ cargo test --release
 ```
 
 No Linux precisa de `libgtk-3-dev` (diálogos de arquivo) e `libfontconfig-dev`.
+
+**Versão pessoal com a chave embutida** (só para uso próprio): compile com a
+opção `kv-embutido` e o caminho do seu `kv.bin`. O programa assina o save do
+Xbox sem precisar da pasta `console`:
+
+```bash
+RE5_KV_EMBUTIDO=/caminho/do/kv.bin cargo build --release --features kv-embutido --target-dir target-pessoal
+```
+
+O `kv.bin` não entra no repositório, mas **o executável gerado passa a conter a
+chave do seu console**: não compartilhe nem publique esse executável.
 `examples/verifica.rs` lê e edita saves pela linha de comando, para testes.
 
 ## Estrutura
