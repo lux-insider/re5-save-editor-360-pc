@@ -112,7 +112,7 @@ impl Retrato {
             return format!("Save de PC: ao gravar, o checksum é recalculado e o arquivo é cifrado de novo.{backup}");
         }
         match &self.keyvault {
-            Some(kv) => format!("Assinatura automática ativada com o keyvault {kv}: o save sai pronto para o Xbox.{backup}"),
+            Some(kv) => format!("Assinatura automática ativada com {kv}: o save sai pronto para o Xbox.{backup}"),
             None => format!(
                 "Sem keyvault (console/kv.bin ao lado do programa): o save é gravado com checksum e hashes, mas sem assinatura — assine no Horizon.{backup}"
             ),

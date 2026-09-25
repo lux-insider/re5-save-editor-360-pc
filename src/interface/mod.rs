@@ -69,6 +69,7 @@ pub fn iniciar(ui: &JanelaPrincipal, inicial: Option<PathBuf>) {
         avisos: 0,
     }));
     let p = ui.global::<Ponte>();
+    p.set_titulo(crate::sistema::chave_embutida::TITULO.into());
     p.set_classes(modelos::textos(CLASSES.iter().map(|c| c.to_string())));
     p.set_filtros(modelos::nomes_filtros());
 
@@ -176,7 +177,7 @@ pub fn iniciar(ui: &JanelaPrincipal, inicial: Option<PathBuf>) {
 fn abrir_caminho(ui: &JanelaPrincipal, ctx: &Ctx, caminho: PathBuf) {
     match Save::abre(&caminho) {
         Ok(s) => {
-            let kv = pastas::keyvault().map(|p| p.display().to_string());
+            let kv = pastas::chave().map(|c| c.descricao());
             carregar(ui, ctx, Retrato::de_info(&s.info(), kv));
             aviso(ui, ctx, "Save aberto.", 0);
         }
@@ -481,8 +482,12 @@ struct Gravado {
 fn gravar(atual: &std::path::Path, m: &Mudancas, como: bool) -> Result<Option<Gravado>, String> {
     let mut s = Save::abre(atual)?;
     s.aplica(m)?;
-    let kv = pastas::keyvault();
-    let (bytes, assinado_por) = s.monta(kv.as_deref())?;
+    // O save de PC não é assinado: a chave só é lida no Xbox.
+    let chave = match s.plat {
+        save::Plataforma::Xbox(_) => pastas::chave().map(|c| c.carregar()).transpose()?,
+        save::Plataforma::Pc => None,
+    };
+    let (bytes, assinado_por) = s.monta_com(chave.as_ref())?;
 
     let destino = if como {
         let nome = atual.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or("savedata.bin".into());

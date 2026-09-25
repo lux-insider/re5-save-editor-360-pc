@@ -9,12 +9,46 @@ pub fn pasta_do_exe() -> PathBuf {
     std::env::current_exe().ok().and_then(|p| p.parent().map(Path::to_path_buf)).unwrap_or_else(|| ".".into())
 }
 
-/// Keyvault do console: `console/kv.bin` ao lado do programa (portátil);
-/// no Linux, também o de ~/horizon_final (só leitura).
-pub fn keyvault() -> Option<PathBuf> {
-    [pasta_do_exe().join("console").join("kv.bin"), home().join("horizon_final").join("console").join("kv.bin")]
-        .into_iter()
-        .find(|p| p.is_file())
+/// De onde vem a chave que assina o save do Xbox.
+pub enum Chave {
+    Arquivo(PathBuf),
+    /// kv.bin embutido na versão pessoal (feature `kv-embutido`).
+    Embutida,
+}
+
+impl Chave {
+    pub fn carregar(&self) -> Result<crate::save::ChaveConsole, String> {
+        match self {
+            Chave::Arquivo(p) => crate::save::ChaveConsole::carrega(p),
+            Chave::Embutida => crate::save::ChaveConsole::de_bytes(super::chave_embutida::KV),
+        }
+    }
+
+    /// Como a chave aparece na nota da tela.
+    pub fn descricao(&self) -> String {
+        match self {
+            Chave::Arquivo(p) => format!("o keyvault {}", p.display()),
+            Chave::Embutida => match self.carregar() {
+                Ok(k) => format!("a chave embutida no programa (console {})", k.console),
+                Err(e) => format!("a chave embutida no programa ({e})"),
+            },
+        }
+    }
+}
+
+/// Keyvault do console. `console/kv.bin` ao lado do programa sempre tem
+/// prioridade; depois vem a chave embutida (versão pessoal) ou, na versão
+/// normal, o de ~/horizon_final (só leitura).
+pub fn chave() -> Option<Chave> {
+    let local = pasta_do_exe().join("console").join("kv.bin");
+    if local.is_file() {
+        return Some(Chave::Arquivo(local));
+    }
+    if super::chave_embutida::EXISTE {
+        return Some(Chave::Embutida);
+    }
+    let horizon = home().join("horizon_final").join("console").join("kv.bin");
+    horizon.is_file().then_some(Chave::Arquivo(horizon))
 }
 
 /// Backups ao lado do programa; se a pasta não for gravável, na pasta de

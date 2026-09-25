@@ -5,6 +5,11 @@ edition = "2021"
 description = "RE5 Save Editor 360+PC: editor de save do Resident Evil 5 para Xbox 360 e PC"
 license = "MIT"
 
+[features]
+# Versão pessoal: embute o kv.bin no programa (caminho em RE5_KV_EMBUTIDO na
+# hora de compilar). Desligada por padrão; o kv.bin nunca entra no repositório.
+kv-embutido = []
+
 [dependencies]
 slint = { version = "1.18", default-features = false, features = [
     "std",

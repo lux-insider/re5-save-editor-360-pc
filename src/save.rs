@@ -311,7 +311,11 @@ pub struct ChaveConsole {
 
 impl ChaveConsole {
     pub fn carrega(p: &Path) -> Result<Self> {
-        let kv = fs::read(p).map_err(|e| format!("keyvault: {e}"))?;
+        Self::de_bytes(&fs::read(p).map_err(|e| format!("keyvault: {e}"))?)
+    }
+
+    /// Lê o keyvault decifrado já na memória (por exemplo, embutido no programa).
+    pub fn de_bytes(kv: &[u8]) -> Result<Self> {
         if kv.len() < 0x4000 {
             return Err("keyvault inválido".into());
         }
@@ -601,17 +605,27 @@ impl Save {
 
     /// Monta o arquivo final. No Xbox, assina se houver keyvault; devolve
     /// os bytes e o console que assinou.
+    #[allow(dead_code)] // usada por examples/verifica.rs
     pub fn monta(&mut self, kv: Option<&Path>) -> Result<(Vec<u8>, Option<String>)> {
+        // O save de PC não é assinado: a chave só é lida no Xbox, como antes.
+        let chave = match self.plat {
+            Plataforma::Xbox(_) => kv.map(ChaveConsole::carrega).transpose()?,
+            Plataforma::Pc => None,
+        };
+        self.monta_com(chave.as_ref())
+    }
+
+    /// Igual a `monta`, com a chave já carregada.
+    pub fn monta_com(&mut self, chave: Option<&ChaveConsole>) -> Result<(Vec<u8>, Option<String>)> {
         self.interno.fecha_checksum();
         match &mut self.plat {
             Plataforma::Pc => Ok((pc_cifra(&self.interno.d), None)),
             Plataforma::Xbox(pkg) => {
                 pkg.grava(&self.interno.d)?;
                 let mut console = None;
-                if let Some(kv) = kv {
-                    let k = ChaveConsole::carrega(kv)?;
-                    pkg.reassina(&k);
-                    console = Some(k.console);
+                if let Some(k) = chave {
+                    pkg.reassina(k);
+                    console = Some(k.console.clone());
                 }
                 Ok((pkg.d.clone(), console))
             }
