@@ -1,0 +1,32 @@
+[package]
+name = "re5-save-editor-360-pc"
+version = "1.0.0"
+edition = "2021"
+description = "RE5 Save Editor 360+PC: editor de save do Resident Evil 5 para Xbox 360 e PC"
+license = "MIT"
+
+[dependencies]
+tao = "0.34"
+wry = "0.53"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha1 = "0.10"
+num-bigint = "0.4"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+
+# Linux: diálogos pelo GTK que o tao já usa. Windows: diálogos do sistema.
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = "0.18"
+
+[target.'cfg(not(target_os = "linux"))'.dependencies]
+rfd = "0.15"
+
+[build-dependencies]
+winresource = "0.1"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
