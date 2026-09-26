@@ -9,13 +9,15 @@ A interface em HTML/CSS/JS (tao + wry) foi trocada por Slint. O backend,
 src/
   main.rs              só inicia: cria a janela e liga o controlador
   save.rs              BACKEND (inalterado): Xbox 360 (STFS, assinatura) e PC (XOR)
-  itens.rs             tabela de itens (re5_items.json) e classes
+  itens.rs             catálogo dos 407 registros (dados/itens.json) e classes
+  historia.rs          textos da Biblioteca e documentos (dados/historia.json)
   sistema/
     pastas.rs          keyvault, pasta de backups, pasta inicial dos diálogos
     dialogos.rs        diálogos de arquivo nativos (rfd)
   interface/
     mod.rs             Controlador: estado da edição e callbacks da UI
     modelos.rs         conversão backend -> estruturas da UI (e volta)
+    catalogo.rs        abas Itens Extras e História (só leitura)
 ui/
   app.slint            janela principal, menus, abas
   tema.slint           cores e medidas

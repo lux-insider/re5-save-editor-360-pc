@@ -1,8 +1,64 @@
-// Aba "Inventário": tabela dos 84 espaços, com filtro e editor ao lado.
-import { ComboBox, StandardTableView } from "std-widgets.slint";
+// Aba "Inventário": os 84 espaços numa grade de ícones, como o baú do jogo,
+// com filtro e o editor ao lado.
+import { ComboBox, ScrollView } from "std-widgets.slint";
 import { Tema } from "../tema.slint";
-import { Ponte } from "../ponte.slint";
+import { Ponte, SlotVisivel } from "../ponte.slint";
 import { EditorSlot } from "../componentes/slots.slint";
+import { CaixaIcone } from "../componentes/icone.slint";
+
+component Espaco inherits Rectangle {
+    in property <SlotVisivel> slot;
+    in property <bool> escolhido;
+    in property <length> lado;
+    callback clicado();
+
+    width: root.lado;
+    height: root.lado + 30px;
+    CaixaIcone {
+        y: 0;
+        width: root.lado;
+        height: root.lado;
+        indice: root.slot.icone;
+        vazio: root.slot.vazio;
+        escolhido: root.escolhido;
+        destaque: toque.has-hover;
+        Text {
+            x: 6px;
+            y: 3px;
+            text: root.slot.numero;
+            font-size: 10px;
+            color: #ffffff80;
+        }
+        if root.slot.mudou: Rectangle {
+            x: parent.width - 13px;
+            y: 5px;
+            width: 8px;
+            height: 8px;
+            border-radius: 4px;
+            background: Tema.laranja;
+        }
+        if !root.slot.vazio: Text {
+            x: parent.width - self.width - 6px;
+            y: parent.height - self.height - 3px;
+            text: root.slot.qtd;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+        }
+    }
+    Text {
+        y: root.lado + 3px;
+        width: parent.width;
+        height: 26px;
+        text: root.slot.vazio ? "" : root.slot.nome;
+        font-size: 10.5px;
+        color: root.escolhido ? Tema.vermelho : Tema.texto;
+        horizontal-alignment: center;
+        wrap: word-wrap;
+        overflow: elide;
+    }
+    toque := TouchArea { mouse-cursor: pointer; clicked => { root.clicado(); } }
+}
 
 export component TelaInventario inherits HorizontalLayout {
     spacing: 20px;
@@ -27,21 +83,31 @@ export component TelaInventario inherits HorizontalLayout {
                 selected => { Ponte.trocar-filtro(self.current-index); }
             }
         }
-        Rectangle {
+        grade := Rectangle {
             vertical-stretch: 1;
             border-radius: Tema.raio-campo;
             background: Tema.painel;
-            tabela := StandardTableView {
+            property <length> lado: 78px;
+            property <length> vao: 10px;
+            property <int> colunas: max(1, floor((self.width - 24px) / (lado + vao)));
+            ScrollView {
                 width: parent.width;
                 height: parent.height;
-                columns: [
-                    { title: "Espaço", width: 90px },
-                    { title: "Item", horizontal-stretch: 1 },
-                    { title: "Classe", width: 170px },
-                    { title: "Quantidade", width: 130px },
-                ];
-                rows: Ponte.inventario;
-                current-row-changed(linha) => { Ponte.selecionar-linha(linha); }
+                content-height: ceil(Ponte.inventario.length / grade.colunas) * (grade.lado + 30px + grade.vao) + 20px;
+                for s[i] in Ponte.inventario: Espaco {
+                    x: 12px + mod(i, grade.colunas) * (grade.lado + grade.vao);
+                    y: 12px + floor(i / grade.colunas) * (grade.lado + 30px + grade.vao);
+                    lado: grade.lado;
+                    slot: s;
+                    escolhido: Ponte.editor-ativo && Ponte.editor-onde == "inventario" && Ponte.editor-indice == s.numero - 1;
+                    clicado => { Ponte.selecionar-linha(i); }
+                }
+            }
+            if Ponte.inventario.length == 0: Text {
+                text: "Nenhum espaço com esse filtro.";
+                color: Tema.texto-2;
+                horizontal-alignment: center;
+                vertical-alignment: center;
             }
         }
     }

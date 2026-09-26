@@ -1,0 +1,141 @@
+// Aba "História": os textos da Biblioteca, os documentos das fases e os das
+// DLCs, com o leitor ao lado. Mostra se cada arquivo da Biblioteca está
+// desbloqueado no save aberto. Somente leitura.
+import { ScrollView } from "std-widgets.slint";
+import { Tema } from "../tema.slint";
+import { Ponte, TextoLista } from "../ponte.slint";
+
+component LinhaTexto inherits Rectangle {
+    in property <TextoLista> linha;
+    in property <bool> escolhido;
+    callback clicado();
+
+    height: root.linha.cabecalho ? 34px : 36px;
+    border-radius: Tema.raio-campo;
+    background: root.linha.cabecalho ? transparent
+        : (root.escolhido ? Tema.selecao : (toque.has-hover ? #0000000a : transparent));
+
+    if root.linha.cabecalho: Text {
+        x: 10px;
+        y: parent.height - self.height - 4px;
+        text: root.linha.titulo;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        color: Tema.vermelho;
+    }
+    if !root.linha.cabecalho: HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 10px;
+        spacing: 8px;
+        Rectangle {
+            width: 4px;
+            height: 18px;
+            y: (parent.height - self.height) / 2;
+            border-radius: 2px;
+            background: root.escolhido ? Tema.vermelho : transparent;
+        }
+        Text {
+            text: root.linha.titulo;
+            font-size: 13px;
+            color: root.escolhido ? Tema.vermelho : Tema.texto;
+            font-weight: root.escolhido ? 700 : 400;
+            overflow: elide;
+            vertical-alignment: center;
+            horizontal-stretch: 1;
+        }
+        if root.linha.estado >= 0: Rectangle {
+            width: 9px;
+            height: 9px;
+            y: (parent.height - self.height) / 2;
+            border-radius: 4.5px;
+            background: root.linha.estado == 1 ? Tema.verde : #00000026;
+        }
+    }
+    toque := TouchArea {
+        enabled: !root.linha.cabecalho;
+        mouse-cursor: root.linha.cabecalho ? default : pointer;
+        clicked => { root.clicado(); }
+    }
+}
+
+export component TelaHistoria inherits HorizontalLayout {
+    spacing: 20px;
+    padding-top: 12px;
+
+    Rectangle {
+        width: 300px;
+        border-radius: Tema.raio-campo;
+        background: Tema.painel;
+        VerticalLayout {
+            padding: 8px;
+            spacing: 6px;
+            HorizontalLayout {
+                padding-left: 6px;
+                padding-top: 4px;
+                spacing: 6px;
+                Rectangle { width: 9px; height: 9px; y: 5px; border-radius: 4.5px; background: Tema.verde; }
+                Text { text: "desbloqueado neste save"; font-size: 11px; color: Tema.texto-2; }
+                Rectangle { width: 9px; height: 9px; y: 5px; border-radius: 4.5px; background: #00000026; }
+                Text { text: "bloqueado"; font-size: 11px; color: Tema.texto-2; }
+            }
+            ScrollView {
+                vertical-stretch: 1;
+                VerticalLayout {
+                    spacing: 1px;
+                    for l[i] in Ponte.historia-lista: LinhaTexto {
+                        linha: l;
+                        escolhido: Ponte.historia-sel == i;
+                        clicado => { Ponte.historia-escolher(i); }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        horizontal-stretch: 1;
+        border-radius: Tema.raio-campo;
+        background: #fffdf8f0;
+        border-width: 1px;
+        border-color: Tema.linha;
+        if Ponte.historia-sel < 0: Text {
+            text: "Escolha um texto na lista.";
+            color: Tema.texto-2;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+        if Ponte.historia-sel >= 0: VerticalLayout {
+            padding: 24px;
+            padding-bottom: 8px;
+            spacing: 4px;
+            Text {
+                text: Ponte.historia-titulo;
+                font-size: 22px;
+                font-weight: 700;
+                color: Tema.vermelho-escuro;
+                wrap: word-wrap;
+            }
+            Text { text: Ponte.historia-subtitulo; font-size: 12px; color: Tema.texto-2; }
+            Rectangle { height: 10px; }
+            ScrollView {
+                vertical-stretch: 1;
+                VerticalLayout {
+                    spacing: 16px;
+                    padding-right: 14px;
+                    padding-bottom: 20px;
+                    for pag[i] in Ponte.historia-paginas: VerticalLayout {
+                        spacing: 16px;
+                        if i > 0: Rectangle { height: 1px; background: #0000001a; }
+                        Text {
+                            text: pag;
+                            font-size: 14px;
+                            color: #2b2118;
+                            wrap: word-wrap;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

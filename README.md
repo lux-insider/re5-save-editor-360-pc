@@ -7,7 +7,37 @@ para Linux e Windows, sem HTML e sem depender de navegador ou WebView.
 É o irmão do [re5-save-editor-360](https://github.com/lux-insider/re5-save-editor-360),
 só que também abre saves de PC e edita os desbloqueios.
 
-## Novidades
+## Novidades da 1.2.0
+
+- **Ícones originais do jogo** em todo o editor: slots do Chris e da Sheva,
+  inventário (agora uma grade de ícones, como o baú do jogo) e escolha do item
+  pelo ícone. São 174 ícones, tirados das texturas do próprio RE5 e das DLCs.
+- **Ficha do item** no painel de edição: nome oficial, ID, descrição do jogo e
+  marca de DLC.
+- **Aba Itens Extras**: os registros da tabela de itens do jogo que não vão
+  para o save (armas de inimigos, objetos de fase, armas sem nome das DLCs,
+  coletáveis ainda não testados e registros internos), com ficha de cada um.
+  Só para consulta.
+- **Aba História**: os 12 arquivos da Biblioteca, os 26 documentos das fases e
+  os 9 documentos das DLCs, **traduzidos para o português**, com leitor.
+  Mostra quais arquivos estão desbloqueados no save aberto.
+- **Nomes e descrições em português**, com o nome oficial em inglês entre
+  parênteses (tradução própria do projeto).
+- Itens das DLCs (Lost in Nightmares e Desperate Escape) ficam só em Itens
+  Extras: só existem com a DLC carregada e não têm uso na campanha.
+- Interface com a fonte Tahoma (padrão no Windows; no Linux, instale a Tahoma
+  para ter o mesmo visual).
+- **Catálogo dos 407 registros** de item (`dados/re5_itens_db.json`), montado
+  a partir da tabela interna do jogo (ITEM_INFO_STRUCT) e dos textos do jogo e
+  das DLCs. Os itens das DLCs Lost in Nightmares e Desperate Escape aparecem
+  marcados.
+- Nos slots do Chris e da Sheva, a lista oferece só o que o jogo aceita no
+  slot do personagem (armas, munição, cura e coletes). O inventário continua
+  com tudo. Um item que já esteja no save nunca some da lista.
+- Nada novo passou a ser gravado: os itens graváveis são os mesmos da versão
+  anterior (testados no console).
+
+## Novidades da 1.1
 
 - **Saves de PC (Steam)**, além do Xbox 360. Ao abrir, o editor descobre sozinho
   de qual plataforma é o save.
@@ -89,13 +119,17 @@ chave do seu console**: não compartilhe nem publique esse executável.
 
 ```
 src/save.rs          backend: lê e grava o save (Xbox 360 e PC)
-src/itens.rs         tabela de itens
 src/sistema/         pastas, keyvault e diálogos de arquivo
 src/interface/       controlador: o único ponto entre a interface e o backend
+src/itens.rs         catálogo dos 407 registros de item (src/dados/itens.json)
+src/historia.rs      textos da Biblioteca e documentos (src/dados/historia.json)
+dados/               banco completo dos 407 registros (re5_itens_db.json)
 ui/ponte.slint       tudo que a interface lê e os callbacks que ela chama
 ui/app.slint         janela, menus e abas
-ui/telas/            início, save, desbloqueios, personagens, inventário
-ui/componentes/      botões, campos, slots, diálogos
+ui/telas/            início, save, desbloqueios, personagens, inventário,
+                     itens extras, história
+ui/componentes/      botões, campos, slots, ícones, diálogos
+ui/imagens/icones.png  os 174 ícones originais num atlas
 ```
 
 Detalhes da migração e o checklist das funções em [docs/MIGRACAO-SLINT.md](docs/MIGRACAO-SLINT.md).
@@ -116,8 +150,8 @@ Formato do save de PC, endereços e listas dos desbloqueios do PC, estilo da
 tela e wallpaper: [RE5 Save Editor de shinneider](https://github.com/shinneider/RE5-Save-Editor)
 (MIT). Detalhes em [CREDITOS.txt](CREDITOS.txt).
 
-Projeto de fã, sem ligação com a Capcom ou a Microsoft. *Resident Evil* e as
-imagens do jogo pertencem à Capcom. Faça backup do save antes de editar; use
+Projeto de fã, sem ligação com a Capcom ou a Microsoft. *Resident Evil*, as
+imagens, os ícones e os textos do jogo pertencem à Capcom. Faça backup do save antes de editar; use
 por sua conta e risco.
 
 ## Licença

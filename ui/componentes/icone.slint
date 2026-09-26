@@ -1,0 +1,92 @@
+// Ícones originais do jogo (atlas ui/imagens/icones.png) e os ladrilhos
+// escuros onde eles aparecem, no estilo do inventário do RE5.
+import { Tema } from "../tema.slint";
+import { Ponte, ItemOpcao } from "../ponte.slint";
+
+// Um ícone do atlas; sem ícone (-1) mostra um marcador discreto.
+export component IconeItem inherits Rectangle {
+    in property <int> indice: -1;
+    in property <bool> apagado: false;
+
+    if root.indice >= 0: Image {
+        width: parent.width;
+        height: parent.height;
+        source: @image-url("../imagens/icones.png");
+        source-clip-x: mod(root.indice, Ponte.atlas-colunas) * Ponte.atlas-celula;
+        source-clip-y: floor(root.indice / Ponte.atlas-colunas) * Ponte.atlas-celula;
+        source-clip-width: Ponte.atlas-celula;
+        source-clip-height: Ponte.atlas-celula;
+        image-fit: contain;
+        opacity: root.apagado ? 0.35 : 1;
+    }
+    if root.indice < 0 && !root.apagado: Rectangle {
+        width: parent.width * 0.46;
+        height: self.width;
+        border-radius: self.width / 2;
+        border-width: 1.5px;
+        border-color: #ffffff38;
+        Text {
+            text: "?";
+            color: #ffffff60;
+            font-size: parent.width * 0.55;
+            font-weight: 700;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// Quadrado escuro com o ícone, como as caixas do inventário do jogo.
+export component CaixaIcone inherits Rectangle {
+    in property <int> indice: -1;
+    in property <bool> escolhido: false;
+    in property <bool> destaque: false;
+    in property <bool> vazio: false;
+    border-radius: 6px;
+    background: @linear-gradient(160deg, #3a3a3a 0%, #1c1c1c 100%);
+    border-width: root.escolhido ? 2px : 1px;
+    border-color: root.escolhido ? Tema.vermelho : (root.destaque ? #ffffff70 : #00000070);
+    clip: true;
+    IconeItem {
+        x: parent.width * 0.08;
+        y: parent.height * 0.08;
+        width: parent.width * 0.84;
+        height: parent.height * 0.84;
+        indice: root.indice;
+        apagado: root.vazio;
+    }
+    @children
+}
+
+// Ladrilho clicável com ícone e nome embaixo (grades de escolha e catálogo).
+export component Ladrilho inherits Rectangle {
+    in property <ItemOpcao> item;
+    in property <bool> escolhido;
+    in property <length> lado: 64px;
+    in property <bool> com-nome: true;
+    callback clicado();
+
+    width: root.lado;
+    height: root.com-nome ? root.lado + 30px : root.lado;
+    caixa := CaixaIcone {
+        y: 0;
+        width: root.lado;
+        height: root.lado;
+        indice: root.item.icone;
+        escolhido: root.escolhido;
+        destaque: toque.has-hover;
+    }
+    if root.com-nome: Text {
+        y: root.lado + 3px;
+        width: parent.width;
+        height: 26px;
+        text: root.item.nome;
+        font-size: 10.5px;
+        color: root.escolhido ? Tema.vermelho : Tema.texto;
+        horizontal-alignment: center;
+        wrap: word-wrap;
+        overflow: elide;
+    }
+    toque := TouchArea { mouse-cursor: pointer; clicked => { root.clicado(); } }
+}
+

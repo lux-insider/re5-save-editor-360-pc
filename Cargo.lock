@@ -3467,7 +3467,7 @@ dependencies = [
 
 [[package]]
 name = "re5-save-editor-360-pc"
-version = "1.1.1"
+version = "1.2.0"
 dependencies = [
  "chrono",
  "num-bigint",

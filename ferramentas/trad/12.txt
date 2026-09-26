@@ -1,0 +1,7 @@
+Manual de Treinamento da BSAA
+#
+Quando a sua barra de vida se esgota por causa dos ferimentos, você entra no estado Morrendo. (Veja a imagem à direita.)
+
+Se o seu parceiro estiver nesse estado, você pode reanimá-lo apertando [botão] perto dele. Você não consegue se reanimar sozinho nesse estado.
+@@
+O jogo termina se o seu parceiro não conseguir ajudar você antes de o tempo acabar, ou se você e o seu parceiro estiverem no estado Morrendo ao mesmo tempo.

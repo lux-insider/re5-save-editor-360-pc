@@ -22,6 +22,40 @@ export struct SlotVisivel {
     qtd: string,
     vazio: bool,
     mudou: bool,
+    icone: int,   // posição no atlas de ícones; -1 = sem ícone
+    dlc: bool,
+}
+
+// Um item numa grade de escolha ou no catálogo.
+export struct ItemOpcao {
+    nome: string,
+    id: string,
+    icone: int,
+}
+
+// Ficha de um registro da tabela de itens do jogo.
+export struct ItemFicha {
+    id: string,
+    nome: string,
+    oficial: string,
+    pt: string,
+    interno: string,
+    enumerador: string,
+    categoria: string,
+    dlc: string,
+    descricao: string,
+    obs: string,
+    colocacoes: string,
+    icone: int,
+    gravavel: bool,
+    status: [Opcao],
+}
+
+// Uma linha da lista da aba História.
+export struct TextoLista {
+    titulo: string,
+    cabecalho: bool,
+    estado: int,  // -1 não se aplica, 0 bloqueado no save, 1 desbloqueado
 }
 
 export global Ponte {
@@ -34,6 +68,10 @@ export global Ponte {
     in property <string> caminho;
 
     in-out property <int> aba: 0;
+
+    // ---- atlas de ícones (ui/imagens/icones.png)
+    in property <int> atlas-colunas: 16;
+    in property <int> atlas-celula: 72;
 
     // ---- campos editáveis (a tela escreve, o Rust confere)
     in-out property <string> gold;
@@ -65,7 +103,7 @@ export global Ponte {
     in-out property <int> personagem: 0;
     in property <[SlotVisivel]> chris;
     in property <[SlotVisivel]> sheva;
-    in property <[[StandardListViewItem]]> inventario;
+    in property <[SlotVisivel]> inventario;
     in property <[string]> filtros;
     in-out property <int> filtro: 0;
     in property <string> resumo-inventario;
@@ -77,11 +115,26 @@ export global Ponte {
     in property <int> editor-indice: -1;
     in property <[string]> classes;
     in-out property <int> editor-classe: 0;
-    in property <[string]> editor-itens;
+    in property <[ItemOpcao]> editor-itens;
     in-out property <int> editor-item: 0;
+    in property <ItemFicha> editor-ficha;
     in-out property <string> editor-qtd;
     in property <string> editor-max;
     in property <bool> editor-qtd-invalida;
+
+    // ---- itens extras (só visualização)
+    in property <[string]> extras-grupos;
+    in-out property <int> extras-grupo: 0;
+    in property <[ItemOpcao]> extras-itens;
+    in-out property <int> extras-sel: -1;
+    in property <ItemFicha> extras-ficha;
+
+    // ---- história (Biblioteca e documentos)
+    in property <[TextoLista]> historia-lista;
+    in-out property <int> historia-sel: -1;
+    in property <string> historia-titulo;
+    in property <string> historia-subtitulo;
+    in property <[string]> historia-paginas;
 
     // ---- salvar
     in property <bool> sujo: false;
@@ -115,6 +168,10 @@ export global Ponte {
     callback selecionar-linha(int /* linha da tabela */);
     callback trocar-filtro(int);
     callback editor-classe-mudou(int);
+    callback editor-escolher(int);
+    callback extras-trocar-grupo(int);
+    callback extras-escolher(int);
+    callback historia-escolher(int);
     callback aplicar-slot();
     callback esvaziar-slot();
     callback confirma-resposta(bool);

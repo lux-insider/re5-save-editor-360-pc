@@ -1,0 +1,18 @@
+Cobaias
+#
+001, Hans
+002, Felicia
+003, Marco
+004, Jonah
+005, Irma
+006, Ken
+007, Laura
+@@
+008, William
+009, Hiro
+010, Derek
+011, Miles
+012, Alex
+013, Albert
+@@
+O número de candidatos foi limitado aos 13 indivíduos listados acima.

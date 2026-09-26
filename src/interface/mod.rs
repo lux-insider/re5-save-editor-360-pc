@@ -4,9 +4,10 @@
 //! callbacks dele. Aqui cada callback vira uma ação: ler ou gravar o save
 //! (save.rs), atualizar o estado da edição e devolver o resultado à tela.
 
+mod catalogo;
 mod modelos;
 
-use crate::itens::{classe_de, Itens, CLASSES};
+use crate::itens::{classe_de, Destino, Itens, CLASSES};
 use crate::save::{self, Mudancas, Save, Slot};
 use crate::sistema::{dialogos, pastas};
 use crate::{JanelaPrincipal, Ponte};
@@ -28,6 +29,10 @@ impl Onde {
     fn maximo(self) -> u32 {
         if self == Onde::Inventario { 0xFFFF } else { u32::MAX }
     }
+
+    fn destino(self) -> Destino {
+        if self == Onde::Inventario { Destino::Inventario } else { Destino::Personagem }
+    }
 }
 
 /// Ação que espera a confirmação do usuário (há alterações não gravadas).
@@ -48,6 +53,10 @@ struct Estado {
     visiveis: Vec<usize>,
     editor: Option<(Onde, usize)>,
     editor_ids: Vec<u32>,
+    /// Classes oferecidas no editor de slot, na ordem do ComboBox.
+    editor_classes: Vec<usize>,
+    /// Abas Itens Extras e História.
+    catalogo: catalogo::Catalogo,
     pendente: Option<Pendente>,
     sujo: bool,
     avisos: u64,
@@ -64,6 +73,8 @@ pub fn iniciar(ui: &JanelaPrincipal, inicial: Option<PathBuf>) {
         visiveis: Vec::new(),
         editor: None,
         editor_ids: Vec::new(),
+        editor_classes: Vec::new(),
+        catalogo: catalogo::Catalogo::novo(),
         pendente: None,
         sujo: false,
         avisos: 0,
@@ -72,6 +83,12 @@ pub fn iniciar(ui: &JanelaPrincipal, inicial: Option<PathBuf>) {
     p.set_titulo(crate::sistema::chave_embutida::TITULO.into());
     p.set_classes(modelos::textos(CLASSES.iter().map(|c| c.to_string())));
     p.set_filtros(modelos::nomes_filtros());
+    {
+        let e = ctx.borrow();
+        p.set_atlas_colunas(e.itens.colunas_atlas);
+        p.set_atlas_celula(e.itens.celula_atlas);
+    }
+    catalogo::iniciar(ui, &ctx);
 
     // Cada callback recebe a janela (fraca) e o estado.
     macro_rules! liga {
@@ -118,6 +135,7 @@ pub fn iniciar(ui: &JanelaPrincipal, inicial: Option<PathBuf>) {
             }
         }
         mostrar_listas(&ui, ctx);
+        catalogo::mostrar_historia(&ui, ctx);
         atualizar(&ui, ctx);
     });
     liga!(on_marcar_todos, |ui, ctx, lista: i32, valor: bool| {
@@ -125,6 +143,7 @@ pub fn iniciar(ui: &JanelaPrincipal, inicial: Option<PathBuf>) {
             l.marcados.iter_mut().for_each(|m| *m = valor);
         }
         mostrar_listas(&ui, ctx);
+        catalogo::mostrar_historia(&ui, ctx);
         atualizar(&ui, ctx);
     });
     liga!(on_selecionar_slot, |ui, ctx, onde: SharedString, indice: i32| {
@@ -138,7 +157,11 @@ pub fn iniciar(ui: &JanelaPrincipal, inicial: Option<PathBuf>) {
         }
     });
     liga!(on_trocar_filtro, |ui, ctx, _filtro: i32| mostrar_slots(&ui, ctx));
-    liga!(on_editor_classe_mudou, |ui, ctx, classe: i32| trocar_classe(&ui, ctx, classe as usize));
+    liga!(on_editor_classe_mudou, |ui, ctx, classe: i32| trocar_classe(&ui, ctx, classe.max(0) as usize));
+    liga!(on_editor_escolher, |ui, ctx, i: i32| escolher_item(&ui, ctx, i.max(0) as usize));
+    liga!(on_extras_trocar_grupo, |ui, ctx, g: i32| catalogo::mostrar_extras(&ui, ctx, g.max(0) as usize));
+    liga!(on_extras_escolher, |ui, ctx, i: i32| catalogo::escolher_extra(&ui, ctx, i));
+    liga!(on_historia_escolher, |ui, ctx, i: i32| catalogo::escolher_texto(&ui, ctx, i));
     liga!(on_aplicar_slot, |ui, ctx| aplicar_slot(&ui, ctx, false));
     liga!(on_esvaziar_slot, |ui, ctx| aplicar_slot(&ui, ctx, true));
     liga!(on_confirma_resposta, |ui, ctx, sim: bool| {
@@ -188,8 +211,6 @@ fn abrir_caminho(ui: &JanelaPrincipal, ctx: &Ctx, caminho: PathBuf) {
 /// Mostra um save (recém-aberto ou desfeito) e zera a edição.
 fn carregar(ui: &JanelaPrincipal, ctx: &Ctx, r: Retrato) {
     let p = ui.global::<Ponte>();
-    p.set_aberto(true);
-    p.set_xbox(r.xbox);
     p.set_plataforma(r.plataforma().into());
     p.set_caminho(r.caminho.display().to_string().into());
     p.set_gold(r.gold.to_string().into());
@@ -206,7 +227,10 @@ fn carregar(ui: &JanelaPrincipal, ctx: &Ctx, r: Retrato) {
     p.set_nota(r.nota().into());
     p.set_editor_ativo(false);
     p.set_filtro(0);
-    if !r.xbox && p.get_aba() > 1 {
+    p.set_aberto(true);
+    p.set_xbox(r.xbox);
+    // As abas mudam entre Xbox e PC: volta para a primeira.
+    if r.xbox != p.get_xbox() || !p.get_aberto() {
         p.set_aba(0);
     }
     if p.get_lista_atual() as usize >= r.listas.len() {
@@ -220,6 +244,7 @@ fn carregar(ui: &JanelaPrincipal, ctx: &Ctx, r: Retrato) {
     }
     mostrar_listas(ui, ctx);
     mostrar_slots(ui, ctx);
+    catalogo::mostrar_historia(ui, ctx);
     atualizar(ui, ctx);
 }
 
@@ -237,7 +262,7 @@ fn mostrar_slots(ui: &JanelaPrincipal, ctx: &Ctx) {
     p.set_chris(modelos::slots_ui(&e.itens, &a.chris, &o.chris));
     p.set_sheva(modelos::slots_ui(&e.itens, &a.sheva, &o.sheva));
     e.visiveis = modelos::filtrar(&a.inventario, p.get_filtro().max(0) as usize);
-    p.set_inventario(modelos::tabela_ui(&e.itens, &a.inventario, &o.inventario, &e.visiveis));
+    p.set_inventario(modelos::inventario_ui(&e.itens, &a.inventario, &o.inventario, &e.visiveis));
     let ocupados = a.inventario.iter().filter(|s| s.id != 0).count();
     p.set_resumo_inventario(
         format!("{} espaços · {ocupados} ocupados · mostrando {}", a.inventario.len(), e.visiveis.len()).into(),
@@ -365,22 +390,47 @@ fn abrir_editor(ui: &JanelaPrincipal, ctx: &Ctx, onde: Onde, i: usize) {
     p.set_editor_max(milhar(onde.maximo() as u64).into());
     p.set_editor_qtd(s.amount.to_string().into());
     p.set_editor_qtd_invalida(false);
-    ctx.borrow_mut().editor = Some((onde, i));
+    {
+        // Classes que podem ir para esse destino, mais a do item atual.
+        let mut e = ctx.borrow_mut();
+        let mut classes = e.itens.classes_para(onde.destino());
+        let atual = classe_de(s.id).min(CLASSES.len() - 1);
+        if !classes.contains(&atual) {
+            classes.push(atual);
+            classes.sort();
+        }
+        p.set_classes(modelos::textos(classes.iter().map(|&c| CLASSES[c].to_string())));
+        e.editor_classes = classes;
+        e.editor = Some((onde, i));
+    }
     preencher_itens(ui, ctx, classe_de(s.id).min(CLASSES.len() - 1), s.id);
     p.set_editor_ativo(true);
 }
 
+/// Preenche a grade de itens de uma classe e marca o item atual.
 fn preencher_itens(ui: &JanelaPrincipal, ctx: &Ctx, classe: usize, atual: u32) {
     let p = ui.global::<Ponte>();
     let mut e = ctx.borrow_mut();
-    let ids = e.itens.da_classe(classe, atual);
-    p.set_editor_itens(modelos::textos(ids.iter().map(|&id| e.itens.rotulo(id))));
-    p.set_editor_classe(classe as i32);
-    p.set_editor_item(ids.iter().position(|&id| id == atual).unwrap_or(0) as i32);
+    let destino = e.editor.map(|(o, _)| o.destino()).unwrap_or(Destino::Inventario);
+    let ids = e.itens.opcoes(classe, atual, destino);
+    let escolhido = ids.iter().position(|&id| id == atual).unwrap_or(0);
+    p.set_editor_itens(modelos::opcoes_ui(&e.itens, &ids));
+    p.set_editor_classe(e.editor_classes.iter().position(|&c| c == classe).unwrap_or(0) as i32);
+    p.set_editor_item(escolhido as i32);
+    p.set_editor_ficha(modelos::ficha(&e.itens, ids.get(escolhido).copied().unwrap_or(0)));
     e.editor_ids = ids;
 }
 
-fn trocar_classe(ui: &JanelaPrincipal, ctx: &Ctx, classe: usize) {
+fn escolher_item(ui: &JanelaPrincipal, ctx: &Ctx, i: usize) {
+    let e = ctx.borrow();
+    let Some(&id) = e.editor_ids.get(i) else { return };
+    let p = ui.global::<Ponte>();
+    p.set_editor_item(i as i32);
+    p.set_editor_ficha(modelos::ficha(&e.itens, id));
+}
+
+fn trocar_classe(ui: &JanelaPrincipal, ctx: &Ctx, indice: usize) {
+    let Some(classe) = ctx.borrow().editor_classes.get(indice).copied() else { return };
     let atual = ctx.borrow().editor.and_then(|(onde, i)| slot_de(&ctx.borrow(), onde, i)).map(|s| s.id).unwrap_or(0);
     preencher_itens(ui, ctx, classe, atual);
     let p = ui.global::<Ponte>();

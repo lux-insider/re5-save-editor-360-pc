@@ -1,11 +1,11 @@
 //! Conversão entre os dados do backend (save.rs) e o que a interface mostra.
 //! Nada aqui abre, grava ou altera arquivo.
 
-use crate::itens::Itens;
+use crate::itens::{nome_categoria, Itens};
 use crate::save::Slot;
-use crate::{Lista, Opcao, SlotVisivel};
+use crate::{ItemFicha, ItemOpcao, Lista, Opcao, SlotVisivel};
 use serde_json::Value;
-use slint::{ModelRc, SharedString, StandardListViewItem, VecModel};
+use slint::{ModelRc, SharedString, VecModel};
 use std::path::PathBuf;
 use std::rc::Rc;
 
@@ -181,39 +181,91 @@ pub fn listas_ui(listas: &[ListaDados]) -> ModelRc<Lista> {
     ModelRc::from(Rc::new(VecModel::from(v)))
 }
 
+fn slot_visivel(itens: &Itens, numero: usize, s: &Slot, mudou: bool) -> SlotVisivel {
+    SlotVisivel {
+        numero: numero as i32,
+        nome: itens.nome(s.id).into(),
+        classe: Itens::nome_classe(s.id).into(),
+        qtd: if s.id == 0 { SharedString::new() } else { format!("× {}", milhar(s.amount as u64)).into() },
+        vazio: s.id == 0,
+        mudou,
+        icone: if s.id == 0 { -1 } else { itens.icone(s.id) },
+        dlc: itens.item(s.id).is_some_and(|i| i.dlc.is_some()),
+    }
+}
+
 pub fn slots_ui(itens: &Itens, atuais: &[Slot], originais: &[Slot]) -> ModelRc<SlotVisivel> {
-    let v: Vec<SlotVisivel> = atuais
+    let v: Vec<SlotVisivel> =
+        atuais.iter().zip(originais).map(|(s, o)| slot_visivel(itens, s.slot as usize + 1, s, s != o)).collect();
+    ModelRc::from(Rc::new(VecModel::from(v)))
+}
+
+/// Espaços do inventário escolhidos pelo filtro, para a grade de ícones.
+pub fn inventario_ui(itens: &Itens, atuais: &[Slot], originais: &[Slot], visiveis: &[usize]) -> ModelRc<SlotVisivel> {
+    let v: Vec<SlotVisivel> =
+        visiveis.iter().map(|&i| slot_visivel(itens, i + 1, &atuais[i], atuais[i] != originais[i])).collect();
+    ModelRc::from(Rc::new(VecModel::from(v)))
+}
+
+/// Ladrilhos (ícone + nome) de uma lista de IDs.
+pub fn opcoes_ui(itens: &Itens, ids: &[u32]) -> ModelRc<ItemOpcao> {
+    let v: Vec<ItemOpcao> = ids
         .iter()
-        .zip(originais)
-        .map(|(s, o)| SlotVisivel {
-            numero: s.slot as i32 + 1,
-            nome: itens.nome(s.id).into(),
-            classe: Itens::nome_classe(s.id).into(),
-            qtd: if s.id == 0 { SharedString::new() } else { format!("× {}", milhar(s.amount as u64)).into() },
-            vazio: s.id == 0,
-            mudou: s != o,
+        .map(|&id| ItemOpcao {
+            nome: if id == 0 { "Vazio".into() } else { itens.item(id).and_then(|i| i.nome.clone()).unwrap_or(format!("0x{id:04X}")).into() },
+            id: format!("0x{id:04X}").into(),
+            icone: if id == 0 { -1 } else { itens.icone(id) },
         })
         .collect();
     ModelRc::from(Rc::new(VecModel::from(v)))
 }
 
-/// Linhas da tabela do inventário para os espaços escolhidos pelo filtro.
-pub fn tabela_ui(itens: &Itens, atuais: &[Slot], originais: &[Slot], visiveis: &[usize]) -> ModelRc<ModelRc<StandardListViewItem>> {
-    let linhas: Vec<ModelRc<StandardListViewItem>> = visiveis
-        .iter()
-        .map(|&i| {
-            let s = &atuais[i];
-            let mudou = s != &originais[i];
-            let celulas: Vec<StandardListViewItem> = vec![
-                format!("{}{}", i + 1, if mudou { "  •" } else { "" }).as_str().into(),
-                itens.nome(s.id).as_str().into(),
-                Itens::nome_classe(s.id).into(),
-                (if s.id == 0 { String::new() } else { milhar(s.amount as u64) }).as_str().into(),
-            ];
-            ModelRc::from(Rc::new(VecModel::from(celulas)))
-        })
-        .collect();
-    ModelRc::from(Rc::new(VecModel::from(linhas)))
+/// Ficha completa de um registro (painel do editor e aba Itens Extras).
+pub fn ficha(itens: &Itens, id: u32) -> ItemFicha {
+    let Some(i) = itens.item(id).filter(|_| id != 0) else {
+        return ItemFicha { nome: "Vazio".into(), id: "0x0000".into(), icone: -1, ..Default::default() };
+    };
+    let t = |o: &Option<String>| SharedString::from(o.clone().unwrap_or_default());
+    let status = [
+        ("Tem nome no jogo", i.oficial.is_some()),
+        ("Tem ícone próprio no jogo", i.icone_tipo.as_deref() == Some("original")),
+        ("Colocado nas fases", i.colocacoes > 0 || (i.dlc.is_some() && i.categoria != "arma_dlc")),
+        ("Pode ser pego (mbItemGet)", i.coletavel),
+        ("Item de slot do personagem (mbSlot)", i.slot),
+        ("Gravável no save pelo editor", i.gravavel || i.legado),
+    ];
+    ItemFicha {
+        id: format!("0x{id:04X}").into(),
+        // Cabeçalho: nome em português em cima, o oficial em inglês embaixo.
+        nome: i.pt.clone().or_else(|| i.oficial.clone()).unwrap_or_else(|| itens.nome(id)).into(),
+        oficial: t(&i.oficial),
+        pt: t(&i.pt),
+        interno: i.interno.clone().into(),
+        enumerador: t(&i.enumerador),
+        categoria: nome_categoria(&i.categoria).into(),
+        dlc: t(&i.dlc),
+        descricao: t(&i.descricao),
+        obs: {
+            let icone = match i.icone_tipo.as_deref() {
+                Some("mesmo_objeto") => "Ícone: o do mesmo objeto na classe das armas.",
+                Some("silhueta") => "Ícone: o jogo não tem imagem própria; é a silhueta da categoria, da loja do jogo.",
+                Some(_) => "",
+                None => "O jogo não tem imagem para este item.",
+            };
+            let o = i.obs.clone().unwrap_or_default();
+            [o.as_str(), icone].iter().filter(|x| !x.is_empty()).cloned().collect::<Vec<_>>().join("\n").into()
+        },
+        colocacoes: match i.colocacoes {
+            0 => SharedString::new(),
+            1 => "1 vez no jogo base".into(),
+            n => format!("{n} vezes no jogo base").into(),
+        },
+        icone: i.icone,
+        gravavel: i.gravavel,
+        status: ModelRc::from(Rc::new(VecModel::from(
+            status.iter().map(|(n, m)| Opcao { nome: (*n).into(), marcado: *m }).collect::<Vec<_>>(),
+        ))),
+    }
 }
 
 /// Quais espaços do inventário cada filtro mostra.

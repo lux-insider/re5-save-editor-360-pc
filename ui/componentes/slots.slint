@@ -1,59 +1,95 @@
 // Cartão de um slot e o painel que edita o slot escolhido.
-import { ComboBox, LineEdit } from "std-widgets.slint";
+import { ComboBox, LineEdit, ScrollView } from "std-widgets.slint";
 import { Tema } from "../tema.slint";
-import { Ponte, SlotVisivel } from "../ponte.slint";
-import { Botao } from "basicos.slint";
+import { Ponte, SlotVisivel, ItemFicha } from "../ponte.slint";
+import { Botao, Selo } from "basicos.slint";
+import { CaixaIcone, Ladrilho } from "icone.slint";
 
 export component CartaoSlot inherits Rectangle {
     in property <SlotVisivel> slot;
     in property <bool> escolhido;
     callback clicado();
 
-    height: 64px;
+    height: 76px;
     border-radius: Tema.raio-campo;
     background: root.escolhido ? Tema.selecao : (toque.has-hover ? #ffffff : Tema.painel);
     border-width: root.escolhido || root.slot.mudou ? 2px : 1px;
     border-color: root.escolhido ? Tema.azul : (root.slot.mudou ? Tema.laranja : Tema.borda);
 
-    VerticalLayout {
-        padding-left: 12px;
+    HorizontalLayout {
+        padding: 7px;
         padding-right: 12px;
-        padding-top: 6px;
-        padding-bottom: 6px;
-        spacing: 2px;
-        HorizontalLayout {
-            Text {
-                text: "Slot " + root.slot.numero + (root.slot.mudou ? "  •  alterado" : "");
-                font-size: 11px;
-                color: root.slot.mudou ? Tema.laranja : Tema.texto-2;
-                horizontal-stretch: 1;
-            }
-            Text { text: root.slot.classe; font-size: 11px; color: Tema.texto-2; }
+        spacing: 12px;
+        CaixaIcone {
+            width: 62px;
+            indice: root.slot.icone;
+            vazio: root.slot.vazio;
         }
-        HorizontalLayout {
-            spacing: 8px;
+        VerticalLayout {
+            spacing: 2px;
+            alignment: center;
+            HorizontalLayout {
+                Text {
+                    text: "Slot " + root.slot.numero + (root.slot.mudou ? "  •  alterado" : "");
+                    font-size: 11px;
+                    color: root.slot.mudou ? Tema.laranja : Tema.texto-2;
+                    horizontal-stretch: 1;
+                }
+                Text { text: root.slot.classe; font-size: 11px; color: Tema.texto-2; }
+            }
             Text {
                 text: root.slot.nome;
                 font-size: 15px;
                 color: root.slot.vazio ? Tema.desativado : Tema.texto;
                 overflow: elide;
-                horizontal-stretch: 1;
-                vertical-alignment: center;
             }
             Text {
                 text: root.slot.qtd;
-                font-size: 13px;
+                font-size: 12px;
                 color: Tema.texto-2;
-                vertical-alignment: center;
             }
         }
     }
     toque := TouchArea { mouse-cursor: pointer; clicked => { root.clicado(); } }
 }
 
+// Cabeçalho com o ícone grande, o nome e as etiquetas de um item.
+export component CabecalhoItem inherits HorizontalLayout {
+    in property <ItemFicha> ficha;
+    spacing: 14px;
+    CaixaIcone {
+        width: 88px;
+        height: 88px;
+        indice: root.ficha.icone;
+    }
+    VerticalLayout {
+        spacing: 4px;
+        alignment: center;
+        Text {
+            text: root.ficha.nome;
+            font-size: 17px;
+            font-weight: 700;
+            color: Tema.texto;
+            wrap: word-wrap;
+        }
+        if root.ficha.oficial != "" && root.ficha.oficial != root.ficha.nome: Text {
+            text: root.ficha.oficial;
+            font-size: 12px;
+            color: Tema.texto-2;
+            wrap: word-wrap;
+        }
+        HorizontalLayout {
+            spacing: 6px;
+            alignment: start;
+            Selo { texto: root.ficha.id; bom: true; neutro: true; }
+            if root.ficha.dlc != "": Selo { texto: "DLC"; bom: true; }
+        }
+    }
+}
+
 // Painel de edição, compartilhado pelas abas Personagens e Inventário.
 export component EditorSlot inherits Rectangle {
-    width: 300px;
+    width: 330px;
     border-radius: Tema.raio-campo;
     border-width: 1px;
     border-color: Tema.linha;
@@ -61,52 +97,68 @@ export component EditorSlot inherits Rectangle {
 
     VerticalLayout {
         padding: 16px;
-        spacing: 12px;
-        alignment: start;
+        spacing: 10px;
 
-        Text { text: "Editar slot"; font-size: 13px; font-weight: 600; color: Tema.texto-2; letter-spacing: 1px; }
+        Text { text: "EDITAR SLOT"; font-size: 12px; font-weight: 700; color: Tema.texto-2; letter-spacing: 1px; }
 
         if !Ponte.editor-ativo: Text {
             text: "Escolha um slot para trocar o item ou a quantidade.";
             wrap: word-wrap;
             color: Tema.texto-2;
+            vertical-stretch: 1;
         }
 
         if Ponte.editor-ativo: VerticalLayout {
-            spacing: 12px;
-            Text { text: Ponte.editor-titulo; font-size: 17px; font-weight: 600; color: Tema.vermelho; }
-            VerticalLayout {
-                spacing: 3px;
-                Text { text: "Classe"; font-size: Tema.fonte-pequena; color: Tema.texto-2; }
-                ComboBox {
-                    model: Ponte.classes;
-                    current-index <=> Ponte.editor-classe;
-                    selected => { Ponte.editor-classe-mudou(self.current-index); }
+            spacing: 10px;
+            vertical-stretch: 1;
+            Text { text: Ponte.editor-titulo; font-size: 13px; font-weight: 700; color: Tema.vermelho; }
+            CabecalhoItem { ficha: Ponte.editor-ficha; }
+            if Ponte.editor-ficha.descricao != "": Text {
+                text: Ponte.editor-ficha.descricao;
+                font-size: 11.5px;
+                color: Tema.texto-2;
+                wrap: word-wrap;
+            }
+            ComboBox {
+                model: Ponte.classes;
+                current-index <=> Ponte.editor-classe;
+                selected => { Ponte.editor-classe-mudou(self.current-index); }
+            }
+            grade := Rectangle {
+                vertical-stretch: 1;
+                min-height: 120px;
+                border-radius: Tema.raio-campo;
+                background: #00000008;
+                property <length> lado: 52px;
+                property <length> vao: 8px;
+                property <int> colunas: max(1, floor((self.width - 16px) / (lado + vao)));
+                ScrollView {
+                    width: parent.width;
+                    height: parent.height;
+                    content-height: ceil(Ponte.editor-itens.length / grade.colunas) * (grade.lado + 30px + grade.vao) + 16px;
+                    for it[i] in Ponte.editor-itens: Ladrilho {
+                        x: 8px + mod(i, grade.colunas) * (grade.lado + grade.vao);
+                        y: 8px + floor(i / grade.colunas) * (grade.lado + 30px + grade.vao);
+                        lado: grade.lado;
+                        item: it;
+                        escolhido: Ponte.editor-item == i;
+                        clicado => { Ponte.editor-escolher(i); }
+                    }
                 }
             }
-            VerticalLayout {
-                spacing: 3px;
-                Text { text: "Item"; font-size: Tema.fonte-pequena; color: Tema.texto-2; }
-                ComboBox {
-                    model: Ponte.editor-itens;
-                    current-index <=> Ponte.editor-item;
-                }
-            }
-            VerticalLayout {
-                spacing: 3px;
-                Text {
-                    text: "Quantidade";
-                    font-size: Tema.fonte-pequena;
-                    color: Ponte.editor-qtd-invalida ? Tema.vermelho : Tema.texto-2;
-                }
-                LineEdit {
-                    text <=> Ponte.editor-qtd;
-                    input-type: number;
-                }
-                Text {
-                    text: "Máximo " + Ponte.editor-max;
-                    font-size: 11px;
-                    color: Ponte.editor-qtd-invalida ? Tema.vermelho : Tema.texto-2;
+            HorizontalLayout {
+                spacing: 10px;
+                VerticalLayout {
+                    spacing: 3px;
+                    Text {
+                        text: "Quantidade (máx. " + Ponte.editor-max + ")";
+                        font-size: 11px;
+                        color: Ponte.editor-qtd-invalida ? Tema.vermelho : Tema.texto-2;
+                    }
+                    LineEdit {
+                        text <=> Ponte.editor-qtd;
+                        input-type: number;
+                    }
                 }
             }
             HorizontalLayout {

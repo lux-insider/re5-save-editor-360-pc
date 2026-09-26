@@ -1,0 +1,17 @@
+TIPOS DE CONTROLE
+#
+Os quatro tipos de controle a seguir podem ser escolhidos em CONFIGURAÇÕES DO CONTROLE, no menu OPÇÕES.
+
+[Tipo A]
+Use [botão] para andar e girar. Use [botão]+[botão] para atirar.
+
+[Tipo B]
+Use [botão] para andar e girar. Use [botão]+[botão] para atirar.
+@@
+[Tipo C]
+Use [botão] para andar de lado e [botão] para girar.
+Use [botão]+[botão] para atirar.
+
+[Tipo D]
+Use [botão] para andar de lado e [botão] para girar.
+Use [botão]+[botão] para atirar.

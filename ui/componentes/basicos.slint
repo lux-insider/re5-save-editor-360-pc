@@ -22,7 +22,7 @@ export component Botao inherits Rectangle {
     t := Text {
         text: root.texto;
         font-size: root.pequeno ? 13px : 15px;
-        font-weight: 500;
+        font-weight: 700;
         letter-spacing: 0.4px;
         color: !root.ativo ? #00000042 : (root.cheio ? white : Tema.vermelho);
         horizontal-alignment: center;
@@ -92,9 +92,10 @@ export component BarraAbas inherits Rectangle {
         for aba[i] in root.abas: Rectangle {
             width: rotulo.preferred-width + 36px;
             rotulo := Text {
+                height: parent.height;
                 text: aba;
                 font-size: 14px;
-                font-weight: root.atual == i ? 600 : 500;
+                font-weight: 700;
                 letter-spacing: 0.4px;
                 color: root.atual == i ? Tema.vermelho : Tema.texto-2;
                 vertical-alignment: center;
@@ -118,15 +119,16 @@ export component BarraAbas inherits Rectangle {
 export component Selo inherits Rectangle {
     in property <string> texto;
     in property <bool> bom: true;
+    in property <bool> neutro: false;
     height: 24px;
     width: s.preferred-width + 18px;
     border-radius: 12px;
-    background: root.bom ? #2e7d321f : #d32f2f1f;
+    background: root.neutro ? #0000000f : (root.bom ? #2e7d321f : #d32f2f1f);
     s := Text {
         text: root.texto;
         font-size: 12px;
-        font-weight: 600;
-        color: root.bom ? Tema.verde : Tema.vermelho;
+        font-weight: 700;
+        color: root.neutro ? Tema.texto-2 : (root.bom ? Tema.verde : Tema.vermelho);
         horizontal-alignment: center;
         vertical-alignment: center;
     }

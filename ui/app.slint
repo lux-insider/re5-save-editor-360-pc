@@ -9,18 +9,23 @@ import { TelaInformacoes } from "telas/informacoes.slint";
 import { TelaDesbloqueios } from "telas/desbloqueios.slint";
 import { TelaPersonagens } from "telas/personagens.slint";
 import { TelaInventario } from "telas/inventario.slint";
+import { TelaExtras } from "telas/extras.slint";
+import { TelaHistoria } from "telas/historia.slint";
 
 export { Ponte }
 
 export component JanelaPrincipal inherits Window {
     title: Ponte.titulo;
     icon: @image-url("imagens/icone.png");
-    preferred-width: 1200px;
-    preferred-height: 840px;
+    preferred-width: 1280px;
+    preferred-height: 880px;
     min-width: 900px;
     min-height: 620px;
     background: #f5f5f5;
     default-font-size: Tema.fonte;
+    // Tahoma: vem no Windows; no Linux, use a instalada no sistema (senão o
+    // sistema escolhe uma parecida).
+    default-font-family: "Tahoma";
 
     // Tema claro sempre: o cartão é claro, mesmo com o sistema no modo escuro.
     init => { Palette.color-scheme = ColorScheme.light; }
@@ -76,17 +81,22 @@ export component JanelaPrincipal inherits Window {
                 horizontal-alignment: center;
             }
 
-            BarraAbas {
-                abas: Ponte.xbox ? ["SAVE", "DESBLOQUEIOS", "PERSONAGENS", "INVENTÁRIO"] : ["SAVE", "DESBLOQUEIOS"];
+            abas := BarraAbas {
+                abas: Ponte.xbox
+                    ? ["SAVE", "DESBLOQUEIOS", "PERSONAGENS", "INVENTÁRIO", "ITENS EXTRAS", "HISTÓRIA"]
+                    : ["SAVE", "DESBLOQUEIOS", "ITENS EXTRAS", "HISTÓRIA"];
                 atual <=> Ponte.aba;
             }
 
             Rectangle {
                 vertical-stretch: 1;
-                if Ponte.aba == 0: TelaInformacoes { width: parent.width; height: parent.height; }
-                if Ponte.aba == 1: TelaDesbloqueios { width: parent.width; height: parent.height; }
-                if Ponte.aba == 2 && Ponte.xbox: TelaPersonagens { width: parent.width; height: parent.height; }
-                if Ponte.aba == 3 && Ponte.xbox: TelaInventario { width: parent.width; height: parent.height; }
+                property <string> pagina: abas.abas[Ponte.aba];
+                if pagina == "SAVE": TelaInformacoes { width: parent.width; height: parent.height; }
+                if pagina == "DESBLOQUEIOS": TelaDesbloqueios { width: parent.width; height: parent.height; }
+                if pagina == "PERSONAGENS": TelaPersonagens { width: parent.width; height: parent.height; }
+                if pagina == "INVENTÁRIO": TelaInventario { width: parent.width; height: parent.height; }
+                if pagina == "ITENS EXTRAS": TelaExtras { width: parent.width; height: parent.height; }
+                if pagina == "HISTÓRIA": TelaHistoria { width: parent.width; height: parent.height; }
             }
 
             Text {

@@ -1,0 +1,15 @@
+Manual de Operação do Laser por Satélite Shango
+#
+O laser por satélite Shango é operado com um designador de alvo a laser (L.T.D.), parecido com um lança-foguetes, que envia as coordenadas do alvo ao satélite. O satélite então dispara um laser altamente concentrado com precisão de centímetros.
+@@
+Procedimento de operação:
+
+1. Aponte o L.T.D. para o alvo para enviar as coordenadas ao satélite.
+@@
+2. Depois que o alvo for definido, as coordenadas serão enviadas. Durante a transmissão, o anel de mira aparece em vermelho na luneta.
+@@
+Observação: se a IA do sensor de mira perceber que o alvo deixou de ser acompanhado pela luneta, a transmissão das coordenadas será cancelada.
+@@
+3. Quando aparecer LOCK ON na luneta, a transmissão foi concluída. Puxe o gatilho para disparar o laser.
+
+4. O canhão precisa de tempo para recarregar antes de disparar de novo.

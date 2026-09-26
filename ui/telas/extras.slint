@@ -1,0 +1,154 @@
+// Aba "Itens Extras": registros da tabela do jogo que não vão para o save
+// (armas de inimigos, objetos de fase, armas das DLCs, coletáveis ainda não
+// testados e registros internos). Somente visualização.
+import { ScrollView } from "std-widgets.slint";
+import { Tema } from "../tema.slint";
+import { Ponte, Opcao } from "../ponte.slint";
+import { Ladrilho } from "../componentes/icone.slint";
+import { CabecalhoItem } from "../componentes/slots.slint";
+
+component Chip inherits Rectangle {
+    in property <string> texto;
+    in property <bool> ativo;
+    callback clicado();
+    height: 30px;
+    width: t.preferred-width + 24px;
+    border-radius: 15px;
+    background: root.ativo ? Tema.vermelho : (toque.has-hover ? #d32f2f14 : transparent);
+    border-width: 1px;
+    border-color: root.ativo ? Tema.vermelho : #d32f2f60;
+    t := Text {
+        text: root.texto;
+        font-size: 12.5px;
+        color: root.ativo ? white : Tema.vermelho;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    toque := TouchArea { mouse-cursor: pointer; clicked => { root.clicado(); } }
+}
+
+component LinhaFicha inherits HorizontalLayout {
+    in property <string> rotulo;
+    in property <string> valor;
+    spacing: 8px;
+    visible: root.valor != "";
+    height: root.valor == "" ? 0 : self.preferred-height;
+    Text { text: root.rotulo; width: 96px; font-size: 12px; color: Tema.texto-2; }
+    Text { text: root.valor; font-size: 12px; color: Tema.texto; wrap: word-wrap; horizontal-stretch: 1; }
+}
+
+component Marca inherits HorizontalLayout {
+    in property <Opcao> opcao;
+    spacing: 6px;
+    Text {
+        text: root.opcao.marcado ? "✔" : "—";
+        width: 16px;
+        font-size: 12px;
+        color: root.opcao.marcado ? Tema.verde : Tema.desativado;
+    }
+    Text { text: root.opcao.nome; font-size: 12px; color: root.opcao.marcado ? Tema.texto : Tema.texto-2; }
+}
+
+export component TelaExtras inherits HorizontalLayout {
+    spacing: 20px;
+    padding-top: 12px;
+
+    VerticalLayout {
+        horizontal-stretch: 1;
+        spacing: 12px;
+        HorizontalLayout {
+            spacing: 8px;
+            alignment: start;
+            for g[i] in Ponte.extras-grupos: Chip {
+                texto: g;
+                ativo: Ponte.extras-grupo == i;
+                clicado => { Ponte.extras-trocar-grupo(i); }
+            }
+        }
+        Text {
+            text: Ponte.extras-grupo == 0 ? "Armas usadas só pelos inimigos: o jogo marca mbItemGet = 0 (o jogador não pega)."
+                : Ponte.extras-grupo == 1 ? "Veículos, torretas, lanterna, laser e caixas: objetos do cenário que usam a tabela de armas."
+                : Ponte.extras-grupo == 2 ? "Itens do Lost in Nightmares e do Desperate Escape: só existem com a DLC carregada e não têm uso na campanha principal."
+                : Ponte.extras-grupo == 3 ? "Itens com nome que o jogador pega, mas que ainda não foram testados no save (erva do chão, facas, peixes…)."
+                : "Registros sem nome ou de uso interno do jogo.";
+            font-size: 12px;
+            color: Tema.texto-2;
+            wrap: word-wrap;
+        }
+        grade := Rectangle {
+            vertical-stretch: 1;
+            border-radius: Tema.raio-campo;
+            background: Tema.painel;
+            property <length> lado: 70px;
+            property <length> vao: 12px;
+            property <int> colunas: max(1, floor((self.width - 24px) / (lado + vao)));
+            ScrollView {
+                width: parent.width;
+                height: parent.height;
+                content-height: ceil(Ponte.extras-itens.length / grade.colunas) * (grade.lado + 30px + grade.vao) + 20px;
+                for it[i] in Ponte.extras-itens: Ladrilho {
+                    x: 12px + mod(i, grade.colunas) * (grade.lado + grade.vao);
+                    y: 12px + floor(i / grade.colunas) * (grade.lado + 30px + grade.vao);
+                    lado: grade.lado;
+                    item: it;
+                    escolhido: Ponte.extras-sel == i;
+                    clicado => { Ponte.extras-escolher(i); }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        width: 330px;
+        border-radius: Tema.raio-campo;
+        border-width: 1px;
+        border-color: Tema.linha;
+        background: Tema.painel;
+        VerticalLayout {
+            padding: 16px;
+            spacing: 10px;
+            Text { text: "FICHA DO REGISTRO"; font-size: 12px; font-weight: 700; color: Tema.texto-2; letter-spacing: 1px; }
+            if Ponte.extras-sel < 0: Text {
+                text: "Escolha um registro para ver os detalhes.";
+                color: Tema.texto-2;
+                wrap: word-wrap;
+                vertical-stretch: 1;
+            }
+            if Ponte.extras-sel >= 0: ScrollView {
+                vertical-stretch: 1;
+                VerticalLayout {
+                    spacing: 10px;
+                    CabecalhoItem { ficha: Ponte.extras-ficha; }
+                    Rectangle {
+                        height: aviso.preferred-height + 14px;
+                        border-radius: Tema.raio-campo;
+                        background: #ed6c0214;
+                        aviso := Text {
+                            x: 10px;
+                            width: parent.width - 20px;
+                            text: "Somente visualização: este registro não é gravado no save.";
+                            font-size: 12px;
+                            color: #9a4600;
+                            wrap: word-wrap;
+                            vertical-alignment: center;
+                        }
+                    }
+                    if Ponte.extras-ficha.descricao != "": Text {
+                        text: Ponte.extras-ficha.descricao;
+                        font-size: 12px;
+                        color: Tema.texto-2;
+                        wrap: word-wrap;
+                    }
+                    LinhaFicha { rotulo: "Categoria"; valor: Ponte.extras-ficha.categoria; }
+                    LinhaFicha { rotulo: "Nome interno"; valor: Ponte.extras-ficha.interno; }
+                    LinhaFicha { rotulo: "Enum"; valor: Ponte.extras-ficha.enumerador; }
+                    LinhaFicha { rotulo: "DLC"; valor: Ponte.extras-ficha.dlc; }
+                    LinhaFicha { rotulo: "Nas fases"; valor: Ponte.extras-ficha.colocacoes; }
+                    LinhaFicha { rotulo: "Observação"; valor: Ponte.extras-ficha.obs; }
+                    Rectangle { height: 1px; background: Tema.linha; }
+                    for o in Ponte.extras-ficha.status: Marca { opcao: o; }
+                }
+            }
+        }
+    }
+}
