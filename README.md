@@ -61,6 +61,60 @@ da Sheva, os 84 espaços do inventário (com os tesouros pelo nome), perfil
 (XUID) e device ID copiados de outro save, assinatura automática com o keyvault
 do console e backup antes de cada gravação.
 
+## Screenshots
+
+Telas da versão 1.2.0 com um save real do Xbox 360. Na primeira, o perfil
+(XUID), o device ID, o console da assinatura e o caminho do arquivo foram
+borrados.
+
+### Save
+Dinheiro, data do save, checksum, assinatura e os IDs de perfil e console.
+
+![Aba Save](docs/screenshots/01-save.png)
+
+### Chris e Sheva
+Os 9 slots de cada personagem com os ícones originais do jogo. Ao escolher um
+slot, o painel mostra a ficha do item e a grade para trocar pelo ícone.
+
+![Slots do Chris](docs/screenshots/02-chris.png)
+
+![Slots da Sheva](docs/screenshots/03-sheva.png)
+
+### Inventário
+Os 84 espaços numa grade de ícones, como o baú do jogo, com quantidade e nome.
+No painel, a grade de itens da classe escolhida (aqui, os tesouros).
+
+![Inventário](docs/screenshots/04-inventario.png)
+
+### Itens Extras
+Registros da tabela de itens do jogo que não vão para o save, só para
+consulta: itens das DLCs, armas de inimigos, objetos de fase e outros. Os
+itens sem imagem no jogo aparecem com "?".
+
+![Itens Extras - itens das DLCs](docs/screenshots/05-itens-extras-dlc.png)
+
+![Itens Extras - armas de inimigos](docs/screenshots/06-itens-extras-inimigos.png)
+
+### Desbloqueios
+Roupas do Chris e da Sheva, filtros de tela, munição infinita, arquivos da
+Biblioteca e figuras.
+
+![Roupas](docs/screenshots/07-roupas.png)
+
+![Filtros de tela](docs/screenshots/08-filtros.png)
+
+![Munição infinita](docs/screenshots/09-municao-infinita.png)
+
+![Arquivos da Biblioteca](docs/screenshots/10-arquivos-biblioteca.png)
+
+![Figuras](docs/screenshots/11-figuras.png)
+
+### História
+Os arquivos da Biblioteca e os documentos do jogo e das DLCs, em português,
+com a marca de desbloqueado no save aberto.
+
+![História](docs/screenshots/12-historia.png)
+
 ## O que edita
 
 | | Xbox 360 | PC |
